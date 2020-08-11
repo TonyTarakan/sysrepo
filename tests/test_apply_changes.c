@@ -181,7 +181,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_CREATED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "name");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "eth52");
+        assert_string_equal(LYD_CANON_VALUE(node), "eth52");
 
         /* 3rd change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -190,7 +190,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_CREATED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "type");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "iana-if-type:ethernetCsmacd");
+        assert_string_equal(LYD_CANON_VALUE(node), "iana-if-type:ethernetCsmacd");
 
         /* 4th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -215,7 +215,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_CREATED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "ip");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "192.168.2.100");
+        assert_string_equal(LYD_CANON_VALUE(node), "192.168.2.100");
 
         /* 7th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -224,7 +224,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_CREATED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "prefix-length");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "24");
+        assert_string_equal(LYD_CANON_VALUE(node), "24");
 
         /* 8th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -233,7 +233,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_CREATED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "enabled");
-        assert_int_equal(node->dflt, 1);
+        assert_true(node->flags & LYD_DEFAULT);
 
         /* 9th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -242,7 +242,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_CREATED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "forwarding");
-        assert_int_equal(node->dflt, 1);
+        assert_true(node->flags & LYD_DEFAULT);
 
         /* 10th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -251,7 +251,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_CREATED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "enabled");
-        assert_int_equal(node->dflt, 1);
+        assert_true(node->flags & LYD_DEFAULT);
 
         /* no more changes */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -263,11 +263,9 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         ret = sr_get_subtree(session, "/ietf-interfaces:interfaces", 0, &subtree);
         assert_int_equal(ret, SR_ERR_OK);
 
-        ret = lyd_schema_sort(subtree, 1);
+        ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS | LYD_PRINT_WD_IMPL_TAG);
         assert_int_equal(ret, 0);
-        ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS | LYP_WD_IMPL_TAG);
-        assert_int_equal(ret, 0);
-        lyd_free(subtree);
+        lyd_free_tree(subtree);
 
         str2 =
         "<interfaces xmlns=\"urn:ietf:params:xml:ns:yang:ietf-interfaces\""
@@ -317,7 +315,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_DELETED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "name");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "eth52");
+        assert_string_equal(LYD_CANON_VALUE(node), "eth52");
 
         /* 3rd change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -326,7 +324,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_DELETED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "type");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "iana-if-type:ethernetCsmacd");
+        assert_string_equal(LYD_CANON_VALUE(node), "iana-if-type:ethernetCsmacd");
 
         /* 4th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -351,7 +349,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_DELETED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "ip");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "192.168.2.100");
+        assert_string_equal(LYD_CANON_VALUE(node), "192.168.2.100");
 
         /* 7th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -360,7 +358,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_DELETED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "prefix-length");
-        assert_string_equal(((struct lyd_node_leaf_list *)node)->value_str, "24");
+        assert_string_equal(LYD_CANON_VALUE(node), "24");
 
         /* 8th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -369,7 +367,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_DELETED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "enabled");
-        assert_int_equal(node->dflt, 1);
+        assert_true(node->flags & LYD_DEFAULT);
 
         /* 9th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -378,7 +376,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_DELETED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "forwarding");
-        assert_int_equal(node->dflt, 1);
+        assert_true(node->flags & LYD_DEFAULT);
 
         /* 10th change */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -387,7 +385,7 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         assert_int_equal(op, SR_OP_DELETED);
         assert_null(prev_val);
         assert_string_equal(node->schema->name, "enabled");
-        assert_int_equal(node->dflt, 1);
+        assert_true(node->flags & LYD_DEFAULT);
 
         /* no more changes */
         ret = sr_get_change_tree_next(session, iter, &op, &node, &prev_val, &prev_list, &prev_dflt);
@@ -399,9 +397,9 @@ module_change_done_cb(sr_session_ctx_t *session, const char *module_name, const 
         ret = sr_get_subtree(session, "/ietf-interfaces:interfaces", 0, &subtree);
         assert_int_equal(ret, SR_ERR_OK);
 
-        ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+        ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
         assert_int_equal(ret, 0);
-        lyd_free_withsiblings(subtree);
+        lyd_free_tree(subtree);
 
         assert_null(str1);
         break;
@@ -449,9 +447,9 @@ apply_change_done_thread(void *arg)
     ret = sr_get_subtree(sess, "/ietf-interfaces:interfaces", 0, &subtree);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
     assert_int_equal(ret, 0);
-    lyd_free(subtree);
+    lyd_free_tree(subtree);
 
     str2 =
     "<interfaces xmlns=\"urn:ietf:params:xml:ns:yang:ietf-interfaces\">"
@@ -480,11 +478,11 @@ apply_change_done_thread(void *arg)
     ret = sr_get_subtree(sess, "/ietf-interfaces:interfaces", 0, &subtree);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
     assert_int_equal(ret, 0);
 
     assert_null(str1);
-    lyd_free(subtree);
+    lyd_free_tree(subtree);
 
     /* signal that we have finished applying changes */
     pthread_barrier_wait(&st->barrier);
@@ -639,9 +637,9 @@ module_update_cb(sr_session_ctx_t *session, const char *module_name, const char 
         ret = sr_get_subtree(session, "/ietf-interfaces:interfaces", 0, &subtree);
         assert_int_equal(ret, SR_ERR_OK);
 
-        ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+        ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
         assert_int_equal(ret, 0);
-        lyd_free(subtree);
+        lyd_free_tree(subtree);
 
         str2 =
         "<interfaces xmlns=\"urn:ietf:params:xml:ns:yang:ietf-interfaces\">"
@@ -769,9 +767,9 @@ apply_update_thread(void *arg)
     ret = sr_get_subtree(sess, "/ietf-interfaces:interfaces", 0, &subtree);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
     assert_int_equal(ret, 0);
-    lyd_free(subtree);
+    lyd_free_tree(subtree);
 
     str2 =
     "<interfaces xmlns=\"urn:ietf:params:xml:ns:yang:ietf-interfaces\">"
@@ -798,11 +796,11 @@ apply_update_thread(void *arg)
     ret = sr_get_subtree(sess, "/ietf-interfaces:interfaces", 0, &subtree);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
     assert_int_equal(ret, 0);
 
     assert_null(str1);
-    lyd_free(subtree);
+    lyd_free_tree(subtree);
 
     /* signal that we have finished applying changes */
     pthread_barrier_wait(&st->barrier);
@@ -891,7 +889,7 @@ module_update2_l1_cb(sr_session_ctx_t *session, const char *module_name, const c
             ret = sr_get_subtree(session, "/when1:l2", 0, &subtree);
             assert_int_equal(ret, SR_ERR_OK);
             if (subtree) {
-                lyd_free(subtree);
+                lyd_free_tree(subtree);
 
                 /* remove also the other leaf */
                 ret = sr_delete_item(session, "/when1:l2", 0);
@@ -938,7 +936,7 @@ module_update2_l2_cb(sr_session_ctx_t *session, const char *module_name, const c
             ret = sr_get_subtree(session, "/when1:l1", 0, &subtree);
             assert_int_equal(ret, SR_ERR_OK);
             if (subtree) {
-                lyd_free(subtree);
+                lyd_free_tree(subtree);
 
                 /* remove also the other leaf */
                 ret = sr_delete_item(session, "/when1:l1", 0);
@@ -1316,11 +1314,11 @@ apply_update_fail_thread(void *arg)
     ret = sr_get_subtree(sess, "/ietf-interfaces:interfaces", 0, &subtree);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
     assert_int_equal(ret, 0);
 
     assert_null(str1);
-    lyd_free(subtree);
+    lyd_free_tree(subtree);
 
     /* signal that we have finished applying changes */
     pthread_barrier_wait(&st->barrier);
@@ -1652,11 +1650,11 @@ apply_change_fail_thread(void *arg)
     ret = sr_get_subtree(sess, "/ietf-interfaces:interfaces", 0, &subtree);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
     assert_int_equal(ret, 0);
 
     assert_null(str1);
-    lyd_free(subtree);
+    lyd_free_tree(subtree);
 
     /* signal that we have finished applying changes #1 */
     pthread_barrier_wait(&st->barrier);
@@ -1676,11 +1674,11 @@ apply_change_fail_thread(void *arg)
     ret = sr_get_subtree(sess, "/ietf-interfaces:interfaces", 0, &subtree);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYP_WITHSIBLINGS);
+    ret = lyd_print_mem(&str1, subtree, LYD_XML, LYD_PRINT_WITHSIBLINGS);
     assert_int_equal(ret, 0);
 
     assert_null(str1);
-    lyd_free(subtree);
+    lyd_free_tree(subtree);
 
     /* signal that we have finished applying changes #2 */
     pthread_barrier_wait(&st->barrier);
@@ -1873,11 +1871,11 @@ apply_change_fail2_thread(void *arg)
             "</bridge-port>"
         "</interface>"
     "</interfaces>";
-    data = lyd_parse_mem((struct ly_ctx *)sr_get_context(st->conn), str, LYD_XML, LYD_OPT_EDIT | LYD_OPT_STRICT);
-    assert_non_null(data);
+    assert_int_equal(LY_SUCCESS, lyd_parse_data_mem(sr_get_context(st->conn), str, LYD_XML,
+            LYD_PARSE_ONLY | LYD_PARSE_STRICT, 0, &data));
 
     ret = sr_edit_batch(sess, data, "merge");
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
     assert_int_equal(ret, SR_ERR_OK);
 
     /* wait for subscription before applying changes */
@@ -1965,11 +1963,11 @@ subscribe_change_fail2_thread(void *arg)
             "</bridge-port>"
         "</interface>"
     "</interfaces>";
-    data = lyd_parse_mem((struct ly_ctx *)sr_get_context(st->conn), str, LYD_XML, LYD_OPT_EDIT | LYD_OPT_STRICT);
-    assert_non_null(data);
+    assert_int_equal(LY_SUCCESS, lyd_parse_data_mem(sr_get_context(st->conn), str, LYD_XML,
+            LYD_PARSE_ONLY | LYD_PARSE_STRICT, 0, &data));
 
     ret = sr_edit_batch(sess, data, "merge");
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
     assert_int_equal(ret, SR_ERR_OK);
     ret = sr_apply_changes(sess, 0, 1);
     assert_int_equal(ret, SR_ERR_OK);
@@ -2095,10 +2093,10 @@ apply_no_changes_thread(void *arg)
     ret = sr_get_data(sess, "/defaults:*", 0, 0, 0, &data);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, data, LYD_XML, LYP_WITHSIBLINGS | LYP_WD_IMPL_TAG);
+    ret = lyd_print_mem(&str1, data, LYD_XML, LYD_PRINT_WITHSIBLINGS | LYD_PRINT_WD_IMPL_TAG);
     assert_int_equal(ret, 0);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     str2 =
     "<cont xmlns=\"urn:defaults\" xmlns:ncwd=\"urn:ietf:params:xml:ns:yang:ietf-netconf-with-defaults\">"
@@ -2143,10 +2141,10 @@ apply_no_changes_thread(void *arg)
     ret = sr_get_data(sess, "/defaults:*", 0, 0, 0, &data);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, data, LYD_XML, LYP_WITHSIBLINGS | LYP_WD_IMPL_TAG);
+    ret = lyd_print_mem(&str1, data, LYD_XML, LYD_PRINT_WITHSIBLINGS | LYD_PRINT_WD_IMPL_TAG);
     assert_int_equal(ret, 0);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     str2 =
     "<cont xmlns=\"urn:defaults\" xmlns:ncwd=\"urn:ietf:params:xml:ns:yang:ietf-netconf-with-defaults\">"
@@ -2569,7 +2567,7 @@ module_change_dflt_leaf_cb(sr_session_ctx_t *session, const char *module_name, c
         /* try to get data just to check the diff is applied correctly */
         ret = sr_get_data(session, "/defaults:*", 0, 0, 0, &data);
         assert_int_equal(ret, SR_ERR_OK);
-        lyd_free_withsiblings(data);
+        lyd_free_all(data);
     }
 
     ++st->cb_called;
@@ -2606,10 +2604,10 @@ apply_change_dflt_leaf_thread(void *arg)
     ret = sr_get_data(sess, "/defaults:*", 0, 0, 0, &data);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, data, LYD_XML, LYP_WITHSIBLINGS | LYP_WD_IMPL_TAG);
+    ret = lyd_print_mem(&str1, data, LYD_XML, LYD_PRINT_WITHSIBLINGS | LYD_PRINT_WD_IMPL_TAG);
     assert_int_equal(ret, 0);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     str2 =
     "<cont xmlns=\"urn:defaults\" xmlns:ncwd=\"urn:ietf:params:xml:ns:yang:ietf-netconf-with-defaults\">"
@@ -2647,10 +2645,10 @@ apply_change_dflt_leaf_thread(void *arg)
     ret = sr_get_data(sess, "/defaults:*", 0, 0, 0, &data);
     assert_int_equal(ret, SR_ERR_OK);
 
-    ret = lyd_print_mem(&str1, data, LYD_XML, LYP_WITHSIBLINGS | LYP_WD_IMPL_TAG);
+    ret = lyd_print_mem(&str1, data, LYD_XML, LYD_PRINT_WITHSIBLINGS | LYD_PRINT_WD_IMPL_TAG);
     assert_int_equal(ret, 0);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     str2 =
     "<cont xmlns=\"urn:defaults\" xmlns:ncwd=\"urn:ietf:params:xml:ns:yang:ietf-netconf-with-defaults\">"
@@ -2690,12 +2688,12 @@ apply_change_dflt_leaf_thread(void *arg)
     /* check only second node */
     assert_string_equal(data->schema->name, "cont");
     assert_string_equal(data->next->schema->name, "l1");
-    assert_int_equal(data->next->child->next->child->child->dflt, 0);
-    assert_string_equal(((struct lyd_node_leaf_list *)data->next->child->next->child->child)->value_str, "5");
+    assert_false(lyd_child(lyd_child(lyd_child(data->next)->next))->flags & LYD_DEFAULT);
+    assert_string_equal(LYD_CANON_VALUE(lyd_child(lyd_child(lyd_child(data->next)->next))), "5");
     assert_string_equal(data->next->next->schema->name, "dflt2");
-    assert_int_equal(data->next->next->dflt, 1);
+    assert_true(data->next->next->flags & LYD_DEFAULT);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 4th change
@@ -2714,10 +2712,10 @@ apply_change_dflt_leaf_thread(void *arg)
     /* check only second first node */
     assert_string_equal(data->schema->name, "cont");
     assert_string_equal(data->next->schema->name, "l1");
-    assert_int_equal(data->next->child->next->child->child->dflt, 0);
-    assert_string_equal(((struct lyd_node_leaf_list *)data->next->child->next->child->child)->value_str, "10");
+    assert_false(lyd_child(lyd_child(lyd_child(data->next)->next))->flags & LYD_DEFAULT);
+    assert_string_equal(LYD_CANON_VALUE(lyd_child(lyd_child(lyd_child(data->next)->next))), "10");
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 5th change (empty diff, no callbacks called)
@@ -2736,10 +2734,10 @@ apply_change_dflt_leaf_thread(void *arg)
     /* check only second node */
     assert_string_equal(data->schema->name, "cont");
     assert_string_equal(data->next->schema->name, "l1");
-    assert_int_equal(data->next->child->next->child->child->dflt, 1);
-    assert_string_equal(((struct lyd_node_leaf_list *)data->next->child->next->child->child)->value_str, "10");
+    assert_true(lyd_child(lyd_child(lyd_child(data->next)->next))->flags & LYD_DEFAULT);
+    assert_string_equal(LYD_CANON_VALUE(lyd_child(lyd_child(lyd_child(data->next)->next))), "10");
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 6th change
@@ -2757,9 +2755,9 @@ apply_change_dflt_leaf_thread(void *arg)
     assert_int_equal(ret, SR_ERR_OK);
 
     assert_string_equal(data->schema->name, "cont");
-    assert_int_equal(data->dflt, 1);
+    assert_true(data->flags & LYD_DEFAULT);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /* cleanup */
     sr_session_stop(sess);
@@ -3268,7 +3266,7 @@ module_change_dflt_leaflist_cb(sr_session_ctx_t *session, const char *module_nam
         /* try to get data just to check the diff is applied correctly */
         ret = sr_get_data(session, "/defaults:*", 0, 0, 0, &data);
         assert_int_equal(ret, SR_ERR_OK);
-        lyd_free_withsiblings(data);
+        lyd_free_all(data);
     }
 
     ++st->cb_called;
@@ -3305,14 +3303,14 @@ apply_change_dflt_leaflist_thread(void *arg)
     assert_int_equal(ret, SR_ERR_OK);
 
     assert_string_equal(data->schema->name, "l2");
-    assert_string_equal(data->child->schema->name, "k");
-    assert_string_equal(data->child->next->schema->name, "c1");
-    assert_string_equal(data->child->next->child->schema->name, "lf1");
-    assert_string_equal(data->child->next->child->next->schema->name, "lf2");
-    assert_string_equal(data->child->next->child->next->next->schema->name, "lf3");
-    assert_string_equal(data->child->next->child->next->next->next->schema->name, "lf4");
+    assert_string_equal(lyd_child(data)->schema->name, "k");
+    assert_string_equal(lyd_child(data)->next->schema->name, "c1");
+    assert_string_equal(lyd_child(lyd_child(data)->next)->schema->name, "lf1");
+    assert_string_equal(lyd_child(lyd_child(data)->next)->next->schema->name, "lf2");
+    assert_string_equal(lyd_child(lyd_child(data)->next)->next->next->schema->name, "lf3");
+    assert_string_equal(lyd_child(lyd_child(data)->next)->next->next->next->schema->name, "lf4");
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 2nd change
@@ -3331,30 +3329,30 @@ apply_change_dflt_leaflist_thread(void *arg)
 
     node = data;
     assert_string_equal(node->schema->name, "pcont");
-    node = node->child;
+    node = lyd_child(node);
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "uni");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     assert_null(node->next);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 3rd change
@@ -3381,24 +3379,24 @@ apply_change_dflt_leaflist_thread(void *arg)
 
     node = data;
     assert_string_equal(node->schema->name, "pcont");
-    node = node->child;
+    node = lyd_child(node);
     assert_string_equal(node->schema->name, "uni");
-    assert_int_equal(node->dflt, 0);
+    assert_false(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 0);
+    assert_false(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 0);
+    assert_false(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 0);
+    assert_false(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 0);
+    assert_false(node->flags & LYD_DEFAULT);
     assert_null(node->next);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 4th change
@@ -3419,30 +3417,30 @@ apply_change_dflt_leaflist_thread(void *arg)
 
     node = data;
     assert_string_equal(node->schema->name, "pcont");
-    node = node->child;
+    node = lyd_child(node);
     assert_string_equal(node->schema->name, "uni");
-    assert_int_equal(node->dflt, 0);
+    assert_false(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     node = node->next;
     assert_string_equal(node->schema->name, "ll2");
-    assert_int_equal(node->dflt, 1);
+    assert_true(node->flags & LYD_DEFAULT);
     assert_null(node->next);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /* cleanup */
     ret = sr_delete_item(sess, "/defaults:pcont", 0);
@@ -3632,7 +3630,7 @@ module_change_dflt_choice_cb(sr_session_ctx_t *session, const char *module_name,
         /* try to get data just to check the diff is applied correctly */
         ret = sr_get_data(session, "/defaults:*", 0, 0, 0, &data);
         assert_int_equal(ret, SR_ERR_OK);
-        lyd_free_withsiblings(data);
+        lyd_free_all(data);
     }
 
     ++st->cb_called;
@@ -3669,11 +3667,11 @@ apply_change_dflt_choice_thread(void *arg)
     assert_int_equal(ret, SR_ERR_OK);
 
     assert_string_equal(data->schema->name, "cont");
-    assert_string_equal(data->child->schema->name, "daily");
-    assert_string_equal(data->child->next->schema->name, "time-of-day");
-    assert_int_equal(data->child->next->dflt, 1);
+    assert_string_equal(lyd_child(data)->schema->name, "daily");
+    assert_string_equal(lyd_child(data)->next->schema->name, "time-of-day");
+    assert_true(lyd_child(data)->next->flags & LYD_DEFAULT);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 2nd change
@@ -3691,12 +3689,12 @@ apply_change_dflt_choice_thread(void *arg)
     assert_int_equal(ret, SR_ERR_OK);
 
     assert_string_equal(data->schema->name, "cont");
-    assert_int_equal(data->dflt, 1);
-    assert_string_equal(data->child->schema->name, "interval");
-    assert_int_equal(data->child->dflt, 1);
-    assert_null(data->child->next);
+    assert_true(data->flags & LYD_DEFAULT);
+    assert_string_equal(lyd_child(data)->schema->name, "interval");
+    assert_true(lyd_child(data)->flags & LYD_DEFAULT);
+    assert_null(lyd_child(data)->next);
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /* cleanup */
     sr_session_stop(sess);
@@ -4051,10 +4049,10 @@ apply_change_done_when_thread(void *arg)
     assert_int_equal(ret, SR_ERR_OK);
 
     assert_string_equal(data->schema->name, "cont");
-    assert_string_equal(((struct lyd_node_leaf_list *)data->child)->value_str, "bye");
+    assert_string_equal(LYD_CANON_VALUE(lyd_child(data)), "bye");
     assert_string_equal(data->next->schema->name, "l1");
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 3rd change
@@ -4074,11 +4072,11 @@ apply_change_done_when_thread(void *arg)
     assert_int_equal(ret, SR_ERR_OK);
 
     assert_string_equal(data->schema->name, "ll");
-    assert_int_equal(data->dflt, 1);
-    assert_string_equal(((struct lyd_node_leaf_list *)data)->value_str, "zzZZzz");
+    assert_true(data->flags & LYD_DEFAULT);
+    assert_string_equal(LYD_CANON_VALUE(data), "zzZZzz");
     assert_string_equal(data->next->schema->name, "l2");
 
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
 
     /*
      * perform 4th change

@@ -25,10 +25,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <time.h>
-#ifdef __APPLE__
-    #include <sys/types.h>
-#endif
 
 #include <libyang/libyang.h>
 

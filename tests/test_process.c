@@ -279,14 +279,13 @@ test_rpc_crash1(int rp, int wp)
     /* wait for the other process */
     barrier(rp, wp);
 
-    rpc = lyd_new_path(NULL, sr_get_context(conn), "/ops:rpc3/l4", "value", 0, 0);
-    sr_assert_true(rpc);
+    sr_assert_int_equal(LY_SUCCESS, lyd_new_path(NULL, sr_get_context(conn), "/ops:rpc3/l4", "value", 0, &rpc));
 
     /* this should crash the other process */
     ret = sr_rpc_send_tree(sess, rpc, 2000, &output);
     sr_assert_int_equal(ret, SR_ERR_CALLBACK_FAILED);
 
-    lyd_free(rpc);
+    lyd_free_tree(rpc);
     sr_disconnect(conn);
     return 0;
 }
@@ -402,8 +401,8 @@ test_notif_instid1(int rp, int wp)
     sr_assert_int_equal(ret, SR_ERR_OK);
 
     /* create the notification */
-    notif = lyd_new_path(NULL, sr_get_context(conn), "/ops:notif3/list2[k='key']/l15",
-            "/ietf-interfaces:interfaces/interface[name='eth0']", 0, 0);
+    lyd_new_path(NULL, sr_get_context(conn), "/ops:notif3/list2[k='key']/l15",
+            "/ietf-interfaces:interfaces/interface[name='eth0']", 0, &notif);
     sr_assert(notif);
 
     /* wait for the other process */
@@ -415,7 +414,7 @@ test_notif_instid1(int rp, int wp)
         sr_assert_int_equal(ret, SR_ERR_OK);
     }
 
-    lyd_free(notif);
+    lyd_free_tree(notif);
 
     sr_unsubscribe(sub);
     sr_disconnect(conn);

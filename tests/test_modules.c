@@ -71,35 +71,31 @@ cmp_int_data(sr_conn_ctx_t *conn, const char *module_name, const char *expected)
     char *str, *ptr, buf[1024];
     struct lyd_node *data, *sr_mod;
     struct ly_set *set;
-    int ret;
+    LY_ERR ret;
 
     /* parse internal data */
     sprintf(buf, "%s/data/sysrepo.startup", sr_get_repo_path());
-    data = lyd_parse_path((struct ly_ctx *)sr_get_context(conn), buf, LYD_LYB, LYD_OPT_CONFIG);
-    assert_non_null(data);
+    assert_int_equal(LY_SUCCESS, lyd_parse_data_path(sr_get_context(conn), buf, LYD_LYB,
+            LYD_PARSE_NO_STATE | LYD_PARSE_ONLY, 0, &data));
 
     /* filter the module */
     sprintf(buf, "/sysrepo:sysrepo-modules/*[name='%s']", module_name);
-    set = lyd_find_path(data, buf);
-    assert_non_null(set);
-    assert_int_equal(set->number, 1);
-    sr_mod = set->set.d[0];
-    ly_set_free(set);
+    assert_int_equal(LY_SUCCESS, lyd_find_xpath(data, buf, &set));
+    assert_int_equal(set->count, 1);
+    sr_mod = set->objs[0];
+    ly_set_free(set, NULL);
 
     /* remove YANG module is present */
-    set = lyd_find_path(sr_mod, "module-yang");
-    assert_non_null(set);
-    if (set->number) {
-        lyd_free(set->set.d[0]);
+    assert_int_equal(LY_SUCCESS, lyd_find_xpath(sr_mod, "module-yang", &set));
+    if (set->count) {
+        lyd_free_tree(set->objs[0]);
     }
-    ly_set_free(set);
+    ly_set_free(set, NULL);
 
-    /* check current internal (sorted) data */
-    ret = lyd_schema_sort(sr_mod, 1);
-    assert_int_equal(ret, 0);
+    /* check current internal data */
     ret = lyd_print_mem(&str, sr_mod, LYD_XML, 0);
-    lyd_free_withsiblings(data);
-    assert_int_equal(ret, 0);
+    lyd_free_all(data);
+    assert_int_equal(ret, LY_SUCCESS);
 
     /* set replay support timestamp to zeroes */
     for (ptr = strstr(str, "<replay-support>"); ptr; ptr = strstr(ptr, "<replay-support>")) {
@@ -1094,20 +1090,20 @@ test_empty_invalid(void **state)
     ret = sr_get_data(sess, "/mandatory:*", 0, 0, 0, &tree);
     assert_int_equal(ret, SR_ERR_OK);
     assert_string_equal(tree->schema->name, "cont");
-    assert_string_equal(tree->child->schema->name, "l1");
+    assert_string_equal(lyd_child(tree)->schema->name, "l1");
     assert_null(tree->next);
 
     /* check running data */
     ret = sr_session_switch_ds(sess, SR_DS_RUNNING);
-    lyd_free_withsiblings(tree);
+    lyd_free_all(tree);
     ret = sr_get_data(sess, "/mandatory:*", 0, 0, 0, &tree);
     assert_int_equal(ret, SR_ERR_OK);
     assert_string_equal(tree->schema->name, "cont");
-    assert_string_equal(tree->child->schema->name, "l1");
+    assert_string_equal(lyd_child(tree)->schema->name, "l1");
     assert_null(tree->next);
 
     /* cleanup, remove its data so that it can be uninstalled */
-    lyd_free_withsiblings(tree);
+    lyd_free_all(tree);
     sr_session_stop(sess);
 
     /* actually remove the module */
@@ -1224,23 +1220,23 @@ test_startup_data_foreign_identityref(void **state)
     ret = sr_get_data(sess, "/t1:*", 0, 0, 0, &tree);
     assert_int_equal(ret, SR_ERR_OK);
     assert_string_equal(tree->schema->name, "haha");
-    assert_string_equal(tree->child->schema->name, "layer-protocol-name");
-    assert_string_equal(((struct lyd_node_leaf_list *)tree->child)->value_str, "t2:desc");
+    assert_string_equal(lyd_child(tree)->schema->name, "layer-protocol-name");
+    assert_string_equal(LYD_CANON_VALUE(lyd_child(tree)), "t2:desc");
     assert_null(tree->next);
 
     /* check running data */
     ret = sr_session_switch_ds(sess, SR_DS_RUNNING);
     assert_int_equal(ret, SR_ERR_OK);
-    lyd_free_withsiblings(tree);
+    lyd_free_all(tree);
     ret = sr_get_data(sess, "/t1:*", 0, 0, 0, &tree);
     assert_int_equal(ret, SR_ERR_OK);
     assert_string_equal(tree->schema->name, "haha");
-    assert_string_equal(tree->child->schema->name, "layer-protocol-name");
-    assert_string_equal(((struct lyd_node_leaf_list *)tree->child)->value_str, "t2:desc");
+    assert_string_equal(lyd_child(tree)->schema->name, "layer-protocol-name");
+    assert_string_equal(LYD_CANON_VALUE(lyd_child(tree)), "t2:desc");
     assert_null(tree->next);
 
     /* cleanup, remove its data so that it can be uninstalled */
-    lyd_free_withsiblings(tree);
+    lyd_free_all(tree);
     sr_session_stop(sess);
 
     /* actually remove the modules */
@@ -1435,14 +1431,13 @@ test_get_module_info(void **state)
 
     /* filter module test */
     struct ly_set *set;
-    set = lyd_find_path(data, "/sysrepo:sysrepo-modules/*[name='test']");
-    assert_non_null(set);
-    assert_int_equal(set->number, 1);
-    sr_mod = set->set.d[0];
-    ly_set_free(set);
+    assert_int_equal(LY_SUCCESS, lyd_find_xpath(data, "/sysrepo:sysrepo-modules/*[name='test']", &set));
+    assert_int_equal(set->count, 1);
+    sr_mod = set->objs[0];
+    ly_set_free(set, NULL);
 
     ret = lyd_print_mem(&str, sr_mod, LYD_XML, 0);
-    lyd_free_withsiblings(data);
+    lyd_free_all(data);
     assert_int_equal(ret, SR_ERR_OK);
 
     str2 =
